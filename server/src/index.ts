@@ -1,10 +1,13 @@
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables from .env file
+dotenv.config({ path: path.join(__dirname, '../.env') });
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { setupRoutes } from './routes';
 import { initializeChromaDB } from './services/chroma';
-
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
