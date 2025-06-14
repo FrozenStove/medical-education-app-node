@@ -5,10 +5,14 @@ import { OpenAIEmbeddingFunction } from 'chromadb';
 import dotenv from 'dotenv';
 import pdfParse from 'pdf-parse';
 
-dotenv.config();
+console.log('Starting ingestion script...');
+
+dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const ARTICLES_DIR = path.join(__dirname, '../../articles');
 const CHUNK_SIZE = 1000; // Characters per chunk
+
+console.log('Articles directory:', ARTICLES_DIR);
 
 async function chunkText(text: string): Promise<string[]> {
     const chunks: string[] = [];
@@ -46,38 +50,48 @@ async function readFileContent(filePath: string): Promise<string> {
 
 async function ingestArticles() {
     try {
+        console.log('Initializing ChromaDB client...');
         // Initialize ChromaDB client
         const chromaClient = new ChromaClient({
             path: process.env.CHROMA_DB_URL || 'http://localhost:8000'
         });
 
+        console.log('Initializing embedding function...');
         // Initialize embedding function
         const embeddingFunction = new OpenAIEmbeddingFunction({
             openai_api_key: process.env.OPENAI_API_KEY || '',
             openai_model: 'text-embedding-ada-002'
         });
 
+        console.log('Getting or creating collection...');
         // Create or get collection
         const collection = await chromaClient.getOrCreateCollection({
             name: 'medical_articles',
             embeddingFunction
         });
 
+        console.log('Reading articles directory...');
         // Read all files from articles directory
         const files = await fs.readdir(ARTICLES_DIR);
+        console.log('Found files:', files);
 
         for (const file of files) {
             const fileExtension = path.extname(file).toLowerCase();
-            if (!['.pdf', '.txt', '.md'].includes(fileExtension)) continue;
+            if (!['.pdf', '.txt', '.md'].includes(fileExtension)) {
+                console.log(`Skipping unsupported file: ${file}`);
+                continue;
+            }
 
             console.log(`Processing ${file}...`);
             const filePath = path.join(ARTICLES_DIR, file);
 
             try {
                 const content = await readFileContent(filePath);
+                console.log(`Read ${content.length} characters from ${file}`);
 
                 // Split content into chunks
                 const chunks = await chunkText(content);
+                console.log(`Created ${chunks.length} chunks from ${file}`);
 
                 // Prepare data for insertion
                 const ids = chunks.map((_, i) => `${file}-${i}`);
@@ -87,6 +101,7 @@ async function ingestArticles() {
                     format: fileExtension.slice(1)
                 }));
 
+                console.log(`Adding ${chunks.length} chunks to ChromaDB...`);
                 // Add to collection
                 await collection.add({
                     ids,
@@ -94,10 +109,10 @@ async function ingestArticles() {
                     metadatas
                 });
 
-                console.log(`Added ${chunks.length} chunks from ${file}`);
+                console.log(`Successfully added ${chunks.length} chunks from ${file}`);
             } catch (error) {
                 console.error(`Error processing ${file}:`, error);
-                continue; // Continue with next file if one fails
+                continue;
             }
         }
 
@@ -108,4 +123,8 @@ async function ingestArticles() {
     }
 }
 
-ingestArticles(); 
+console.log('Starting ingestion process...');
+ingestArticles().catch(error => {
+    console.error('Fatal error:', error);
+    process.exit(1);
+}); 
