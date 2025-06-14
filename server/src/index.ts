@@ -22,6 +22,22 @@ initializeChromaDB();
 // Setup routes
 setupRoutes(app);
 
+// Log all registered routes
+console.log('\nRegistered Routes:');
+app._router.stack.forEach((middleware: any) => {
+    if (middleware.route) {
+        // Routes registered directly on the app
+        console.log(`${Object.keys(middleware.route.methods).join(', ').toUpperCase()} ${middleware.route.path}`);
+    } else if (middleware.name === 'router') {
+        // Router middleware
+        middleware.handle.stack.forEach((handler: any) => {
+            if (handler.route) {
+                console.log(`${Object.keys(handler.route.methods).join(', ').toUpperCase()} ${handler.route.path}`);
+            }
+        });
+    }
+});
+
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
     console.error(err.stack);
@@ -29,5 +45,5 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    console.log(`\nServer is running on port ${port}`);
 }); 
