@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { getChromaClient } from '../services/chroma';
+import { IncludeEnum, OpenAIEmbeddingFunction } from 'chromadb';
 
 const router = Router();
 
@@ -14,7 +15,13 @@ router.post('/', async (req, res) => {
     try {
         const article = articleSchema.parse(req.body);
         const chromaClient = getChromaClient();
-        const collection = await chromaClient.getCollection('medical_articles');
+        const collection = await chromaClient.getCollection({
+            name: 'medical_articles',
+            embeddingFunction: new OpenAIEmbeddingFunction({
+                openai_api_key: process.env.OPENAI_API_KEY || '',
+                openai_model: 'text-embedding-ada-002'
+            })
+        });
 
         // Add document to collection
         await collection.add({
@@ -36,10 +43,16 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
     try {
         const chromaClient = getChromaClient();
-        const collection = await chromaClient.getCollection('medical_articles');
+        const collection = await chromaClient.getCollection({
+            name: 'medical_articles',
+            embeddingFunction: new OpenAIEmbeddingFunction({
+                openai_api_key: process.env.OPENAI_API_KEY || '',
+                openai_model: 'text-embedding-ada-002'
+            })
+        });
 
         const results = await collection.get({
-            include: ['metadatas', 'documents']
+            include: [IncludeEnum.Metadatas, IncludeEnum.Documents]
         });
 
         res.json(results);
