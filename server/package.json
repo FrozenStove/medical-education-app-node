@@ -8,7 +8,9 @@
         "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
         "build": "tsc",
         "test": "jest",
-        "ingest": "ts-node src/scripts/ingestArticles.ts"
+        "ingest": "ts-node -r dotenv/config src/scripts/ingestArticles.ts",
+        "verify": "ts-node src/scripts/verifyIngestion.ts",
+        "check": "ts-node src/scripts/checkChroma.ts"
     },
     "dependencies": {
         "express": "^4.18.2",
