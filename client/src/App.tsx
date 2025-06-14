@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
+const serverUrl = 'http://localhost:3010'
 
 function App() {
     const [query, setQuery] = useState('');
@@ -12,7 +13,7 @@ function App() {
 
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:3001/api/chat', {
+            const response = await fetch(`${serverUrl}/api/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
