@@ -11,8 +11,28 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 const ARTICLES_DIR = path.join(__dirname, '../../articles');
 const CHUNK_SIZE = 1000; // Characters per chunk
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 5000; // 5 seconds
 
-console.log('Articles directory:', ARTICLES_DIR);
+// Helper function to wait
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Helper function to recursively get all files
+async function getAllFiles(dir: string): Promise<string[]> {
+    const files: string[] = [];
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+
+    for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+            files.push(...await getAllFiles(fullPath));
+        } else if (entry.isFile() && !entry.name.startsWith('.')) {
+            files.push(fullPath);
+        }
+    }
+
+    return files;
+}
 
 async function chunkText(text: string): Promise<string[]> {
     const chunks: string[] = [];
@@ -48,75 +68,90 @@ async function readFileContent(filePath: string): Promise<string> {
     }
 }
 
+async function addToCollectionWithRetry(collection: any, data: any, retryCount = 0): Promise<void> {
+    try {
+        await collection.add(data);
+    } catch (error: any) {
+        if (error.message?.includes('rate limit') && retryCount < MAX_RETRIES) {
+            console.log(`Rate limit hit, retrying in ${RETRY_DELAY / 1000} seconds... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
+            await wait(RETRY_DELAY);
+            return addToCollectionWithRetry(collection, data, retryCount + 1);
+        }
+        throw error;
+    }
+}
+
 async function ingestArticles() {
     try {
         console.log('Initializing ChromaDB client...');
-        // Initialize ChromaDB client
         const chromaClient = new ChromaClient({
             path: process.env.CHROMA_DB_URL || 'http://localhost:8000'
         });
 
         console.log('Initializing embedding function...');
-        // Initialize embedding function
         const embeddingFunction = new OpenAIEmbeddingFunction({
             openai_api_key: process.env.OPENAI_API_KEY || '',
             openai_model: 'text-embedding-ada-002'
         });
 
         console.log('Getting or creating collection...');
-        // Create or get collection
         const collection = await chromaClient.getOrCreateCollection({
             name: 'medical_articles',
             embeddingFunction
         });
 
         console.log('Reading articles directory...');
-        // Read all files from articles directory
-        const files = await fs.readdir(ARTICLES_DIR);
-        console.log('Found files:', files);
+        const files = await getAllFiles(ARTICLES_DIR);
+        console.log(`Found ${files.length} files to process`);
 
-        for (const file of files) {
-            const fileExtension = path.extname(file).toLowerCase();
+        let totalChunks = 0;
+        let successfulFiles = 0;
+
+        for (const filePath of files) {
+            const fileExtension = path.extname(filePath).toLowerCase();
             if (!['.pdf', '.txt', '.md'].includes(fileExtension)) {
-                console.log(`Skipping unsupported file: ${file}`);
+                console.log(`Skipping unsupported file: ${filePath}`);
                 continue;
             }
 
-            console.log(`Processing ${file}...`);
-            const filePath = path.join(ARTICLES_DIR, file);
+            console.log(`\nProcessing ${filePath}...`);
 
             try {
                 const content = await readFileContent(filePath);
-                console.log(`Read ${content.length} characters from ${file}`);
+                console.log(`Read ${content.length} characters from ${filePath}`);
 
-                // Split content into chunks
                 const chunks = await chunkText(content);
-                console.log(`Created ${chunks.length} chunks from ${file}`);
+                console.log(`Created ${chunks.length} chunks from ${filePath}`);
 
-                // Prepare data for insertion
-                const ids = chunks.map((_, i) => `${file}-${i}`);
+                const relativePath = path.relative(ARTICLES_DIR, filePath);
+                const ids = chunks.map((_, i) => `${relativePath}-${i}`);
                 const metadatas = chunks.map(() => ({
-                    source: file,
+                    source: relativePath,
                     type: 'medical_article',
-                    format: fileExtension.slice(1)
+                    format: fileExtension.slice(1),
+                    category: path.dirname(relativePath)
                 }));
 
                 console.log(`Adding ${chunks.length} chunks to ChromaDB...`);
-                // Add to collection
-                await collection.add({
+                await addToCollectionWithRetry(collection, {
                     ids,
                     documents: chunks,
                     metadatas
                 });
 
-                console.log(`Successfully added ${chunks.length} chunks from ${file}`);
+                console.log(`Successfully added ${chunks.length} chunks from ${filePath}`);
+                totalChunks += chunks.length;
+                successfulFiles++;
             } catch (error) {
-                console.error(`Error processing ${file}:`, error);
+                console.error(`Error processing ${filePath}:`, error);
                 continue;
             }
         }
 
-        console.log('Ingestion completed successfully!');
+        console.log('\nIngestion Summary:');
+        console.log(`Successfully processed ${successfulFiles} files`);
+        console.log(`Total chunks added: ${totalChunks}`);
+        console.log('Ingestion completed!');
     } catch (error) {
         console.error('Error during ingestion:', error);
         process.exit(1);
