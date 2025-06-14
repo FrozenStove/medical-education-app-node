@@ -7,7 +7,8 @@
         "start": "node dist/index.js",
         "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
         "build": "tsc",
-        "test": "jest"
+        "test": "jest",
+        "ingest": "ts-node src/scripts/ingestArticles.ts"
     },
     "dependencies": {
         "express": "^4.18.2",
@@ -16,12 +17,14 @@
         "langchain": "^0.1.0",
         "openai": "^4.20.0",
         "chromadb": "^1.7.3",
-        "zod": "^3.22.4"
+        "zod": "^3.22.4",
+        "pdf-parse": "^1.1.1"
     },
     "devDependencies": {
         "@types/express": "^4.17.21",
         "@types/node": "^20.10.0",
         "@types/cors": "^2.8.17",
+        "@types/pdf-parse": "^1.1.4",
         "typescript": "^5.3.2",
         "ts-node-dev": "^2.0.0",
         "@types/jest": "^29.5.10",

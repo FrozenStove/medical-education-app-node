@@ -2,10 +2,16 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { OpenAI } from 'openai';
 import { getChromaClient } from '../services/chroma';
+import { OpenAIEmbeddingFunction } from 'chromadb';
 
 const router = Router();
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY
+});
+
+const embeddingFunction = new OpenAIEmbeddingFunction({
+    openai_api_key: process.env.OPENAI_API_KEY || '',
+    openai_model: 'text-embedding-ada-002'
 });
 
 const chatRequestSchema = z.object({
@@ -19,7 +25,10 @@ router.post('/', async (req, res) => {
 
         // Get relevant documents from ChromaDB
         const chromaClient = getChromaClient();
-        const collection = await chromaClient.getCollection('medical_articles');
+        const collection = await chromaClient.getCollection({
+            name: 'medical_articles',
+            embeddingFunction
+        });
 
         // Query the vector database
         const results = await collection.query({
