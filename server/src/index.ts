@@ -10,7 +10,7 @@ import { setupRoutes } from './routes';
 import { initializeChromaDB } from './services/chroma';
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3010;
 
 // Middleware
 app.use(cors());
@@ -24,15 +24,19 @@ setupRoutes(app);
 
 // Log all registered routes
 console.log('\nRegistered Routes:');
-app._router.stack.forEach((middleware: any) => {
-    if (middleware.route) {
-        // Routes registered directly on the app
-        console.log(`${Object.keys(middleware.route.methods).join(', ').toUpperCase()} ${middleware.route.path}`);
-    } else if (middleware.name === 'router') {
-        // Router middleware
-        middleware.handle.stack.forEach((handler: any) => {
-            if (handler.route) {
-                console.log(`${Object.keys(handler.route.methods).join(', ').toUpperCase()} ${handler.route.path}`);
+app._router.stack.forEach((layer: any) => {
+    if (layer.route) {
+        const methods = Object.keys(layer.route.methods).join(', ').toUpperCase();
+        console.log(`${methods} ${layer.route.path}`);
+    } else if (layer.name === 'router') {
+        layer.handle.stack.forEach((route: any) => {
+            if (route.route) {
+                const methods = Object.keys(route.route.methods).join(', ').toUpperCase();
+                const path = layer.regexp.source
+                    .replace('^\\/', '/')
+                    .replace('\\/?(?=\\/|$)', '')
+                    .replace(/\\\//g, '/');
+                console.log(`${methods} ${path}${route.route.path}`);
             }
         });
     }
