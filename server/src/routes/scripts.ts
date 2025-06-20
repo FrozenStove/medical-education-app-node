@@ -1,9 +1,16 @@
-import { Router } from 'express';
+import { NextFunction, Router, Request, Response } from 'express';
 import { ingestArticles } from '@/scripts/ingestArticles';
 import { verifyIngestion } from '@/scripts/verifyIngestion';
 import { checkChroma } from '@/scripts/checkChroma';
 
 const scriptsRouter = Router();
+
+export async function verifyScriptsAuth(req: Request, res: Response, next: NextFunction) {
+    if (req.header('auth') !== "1234567890") {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    next();
+}
 
 scriptsRouter.get('/ingest', async (req, res) => {
     try {
