@@ -1,1 +1,1 @@
-chromaDbUrl: "https://chromadb:8000"
+chromaDbUrl: "http://chromadb:8000"
