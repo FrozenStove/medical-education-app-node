@@ -15,6 +15,25 @@ const CHUNK_SIZE = 1000; // Characters per chunk
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 5000; // 5 seconds
 
+// Types for structured results
+export interface IngestResult {
+    success: boolean;
+    totalFiles: number;
+    successfulFiles: number;
+    failedFiles: number;
+    totalChunks: number;
+    errors: string[];
+    fileResults: FileResult[];
+}
+
+export interface FileResult {
+    filePath: string;
+    success: boolean;
+    chunks: number;
+    error?: string;
+    contentLength: number;
+}
+
 // Helper function to wait
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -82,7 +101,17 @@ async function addToCollectionWithRetry(collection: any, data: any, retryCount =
     }
 }
 
-export async function ingestArticles() {
+export async function ingestArticles(): Promise<IngestResult> {
+    const result: IngestResult = {
+        success: false,
+        totalFiles: 0,
+        successfulFiles: 0,
+        failedFiles: 0,
+        totalChunks: 0,
+        errors: [],
+        fileResults: []
+    };
+
     try {
         console.log('Initializing ChromaDB client...');
         const chromaClient = new ChromaClient({
@@ -103,25 +132,31 @@ export async function ingestArticles() {
 
         console.log('Reading articles directory...');
         const files = await getAllFiles(ARTICLES_DIR);
-        console.log(`Found ${files.length} files to process`);
+        const supportedFiles = files.filter(file => {
+            const ext = path.extname(file).toLowerCase();
+            return ['.pdf', '.txt', '.md'].includes(ext);
+        });
 
-        let totalChunks = 0;
-        let successfulFiles = 0;
+        result.totalFiles = supportedFiles.length;
+        console.log(`Found ${supportedFiles.length} supported files to process`);
 
-        for (const filePath of files) {
-            const fileExtension = path.extname(filePath).toLowerCase();
-            if (!['.pdf', '.txt', '.md'].includes(fileExtension)) {
-                console.log(`Skipping unsupported file: ${filePath}`);
-                continue;
-            }
+        for (const filePath of supportedFiles) {
+            const fileResult: FileResult = {
+                filePath,
+                success: false,
+                chunks: 0,
+                contentLength: 0
+            };
 
             console.log(`\nProcessing ${filePath}...`);
 
             try {
                 const content = await readFileContent(filePath);
+                fileResult.contentLength = content.length;
                 console.log(`Read ${content.length} characters from ${filePath}`);
 
                 const chunks = await chunkText(content);
+                fileResult.chunks = chunks.length;
                 console.log(`Created ${chunks.length} chunks from ${filePath}`);
 
                 const relativePath = path.relative(ARTICLES_DIR, filePath);
@@ -129,7 +164,7 @@ export async function ingestArticles() {
                 const metadatas = chunks.map(() => ({
                     source: relativePath,
                     type: 'medical_article',
-                    format: fileExtension.slice(1),
+                    format: path.extname(filePath).slice(1),
                     category: path.dirname(relativePath)
                 }));
 
@@ -141,21 +176,35 @@ export async function ingestArticles() {
                 });
 
                 console.log(`Successfully added ${chunks.length} chunks from ${filePath}`);
-                totalChunks += chunks.length;
-                successfulFiles++;
-            } catch (error) {
-                console.error(`Error processing ${filePath}:`, error);
-                continue;
+                fileResult.success = true;
+                result.successfulFiles++;
+                result.totalChunks += chunks.length;
+            } catch (error: any) {
+                const errorMsg = `Error processing ${filePath}: ${error.message}`;
+                console.error(errorMsg);
+                fileResult.error = error.message;
+                result.errors.push(errorMsg);
+                result.failedFiles++;
             }
+
+            result.fileResults.push(fileResult);
         }
 
+        result.success = result.failedFiles === 0;
+
         console.log('\nIngestion Summary:');
-        console.log(`Successfully processed ${successfulFiles} files`);
-        console.log(`Total chunks added: ${totalChunks}`);
+        console.log(`Successfully processed ${result.successfulFiles} files`);
+        console.log(`Failed files: ${result.failedFiles}`);
+        console.log(`Total chunks added: ${result.totalChunks}`);
         console.log('Ingestion completed!');
-    } catch (error) {
-        console.error('Error during ingestion:', error);
-        process.exit(1);
+
+        return result;
+    } catch (error: any) {
+        const errorMsg = `Error during ingestion: ${error.message}`;
+        console.error(errorMsg);
+        result.errors.push(errorMsg);
+        result.success = false;
+        return result;
     }
 }
 
