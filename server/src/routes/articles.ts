@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { getChromaClient } from '../services/chroma';
 import { IncludeEnum, OpenAIEmbeddingFunction } from 'chromadb';
+import { OPENAI_API_KEY } from '@/constants';
 
 const router = Router();
 
@@ -18,7 +19,7 @@ router.post('/', async (req, res) => {
         const collection = await chromaClient.getCollection({
             name: 'medical_articles',
             embeddingFunction: new OpenAIEmbeddingFunction({
-                openai_api_key: process.env.OPENAI_API_KEY || '',
+                openai_api_key: OPENAI_API_KEY,
                 openai_model: 'text-embedding-ada-002'
             })
         });
@@ -46,7 +47,7 @@ router.get('/', async (req, res) => {
         const collection = await chromaClient.getCollection({
             name: 'medical_articles',
             embeddingFunction: new OpenAIEmbeddingFunction({
-                openai_api_key: process.env.OPENAI_API_KEY || '',
+                openai_api_key: OPENAI_API_KEY || '',
                 openai_model: 'text-embedding-ada-002'
             })
         });

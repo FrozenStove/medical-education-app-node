@@ -3,19 +3,20 @@ import { z } from 'zod';
 import { OpenAI } from 'openai';
 import { getChromaClient } from '../services/chroma';
 import { OpenAIEmbeddingFunction } from 'chromadb';
+import { OPENAI_API_KEY } from '@/constants';
 
 const router = Router();
 
-if (!process.env.OPENAI_API_KEY) {
+if (!OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY is not set in environment variables');
 }
 
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: OPENAI_API_KEY
 });
 
 const embeddingFunction = new OpenAIEmbeddingFunction({
-    openai_api_key: process.env.OPENAI_API_KEY || '',
+    openai_api_key: OPENAI_API_KEY,
     openai_model: 'text-embedding-ada-002'
 });
 

@@ -2,6 +2,8 @@ import { ChromaClient, IncludeEnum } from 'chromadb';
 import { OpenAIEmbeddingFunction } from 'chromadb';
 import dotenv from 'dotenv';
 import path from 'path';
+import { CHROMA_DB_URL } from '@/constants';
+import { OPENAI_API_KEY } from '@/constants';
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
@@ -9,12 +11,12 @@ async function verifyIngestion() {
     try {
         // Initialize ChromaDB client
         const chromaClient = new ChromaClient({
-            path: process.env.CHROMA_DB_URL || 'http://localhost:8000'
+            path: CHROMA_DB_URL
         });
 
         // Initialize embedding function
         const embeddingFunction = new OpenAIEmbeddingFunction({
-            openai_api_key: process.env.OPENAI_API_KEY || '',
+            openai_api_key: OPENAI_API_KEY,
             openai_model: 'text-embedding-ada-002'
         });
 

@@ -1,6 +1,7 @@
 import { ChromaClient, IncludeEnum, OpenAIEmbeddingFunction } from 'chromadb';
 import dotenv from 'dotenv';
 import path from 'path';
+import { CHROMA_DB_URL, OPENAI_API_KEY } from '@/constants';
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
@@ -8,7 +9,7 @@ async function checkChroma() {
     try {
         console.log('Connecting to ChromaDB...');
         const client = new ChromaClient({
-            path: process.env.CHROMA_DB_URL || 'http://localhost:8000'
+            path: CHROMA_DB_URL
         });
 
         // List all collections
@@ -25,7 +26,7 @@ async function checkChroma() {
             console.log(`\nChecking collection: ${collection}`);
             const coll = await client.getCollection({
                 name: collection, embeddingFunction: new OpenAIEmbeddingFunction({
-                    openai_api_key: process.env.OPENAI_API_KEY || '',
+                    openai_api_key: OPENAI_API_KEY,
                     openai_model: 'text-embedding-ada-002'
                 })
             });

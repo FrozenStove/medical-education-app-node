@@ -4,6 +4,7 @@ import { ChromaClient } from 'chromadb';
 import { OpenAIEmbeddingFunction } from 'chromadb';
 import dotenv from 'dotenv';
 import pdfParse from 'pdf-parse';
+import { CHROMA_DB_URL, OPENAI_API_KEY } from '@/constants';
 
 console.log('Starting ingestion script...');
 
@@ -85,12 +86,12 @@ async function ingestArticles() {
     try {
         console.log('Initializing ChromaDB client...');
         const chromaClient = new ChromaClient({
-            path: process.env.CHROMA_DB_URL || 'http://localhost:8000'
+            path: CHROMA_DB_URL
         });
 
         console.log('Initializing embedding function...');
         const embeddingFunction = new OpenAIEmbeddingFunction({
-            openai_api_key: process.env.OPENAI_API_KEY || '',
+            openai_api_key: OPENAI_API_KEY,
             openai_model: 'text-embedding-ada-002'
         });
 

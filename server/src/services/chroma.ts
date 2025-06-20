@@ -1,3 +1,4 @@
+import { CHROMA_DB_URL } from '@/constants';
 import { ChromaClient } from 'chromadb';
 
 let chromaClient: ChromaClient;
@@ -5,7 +6,7 @@ let chromaClient: ChromaClient;
 export const initializeChromaDB = async () => {
     try {
         chromaClient = new ChromaClient({
-            path: process.env.CHROMA_DB_URL || 'http://localhost:8000'
+            path: CHROMA_DB_URL
         });
         console.log('ChromaDB initialized successfully');
     } catch (error) {
