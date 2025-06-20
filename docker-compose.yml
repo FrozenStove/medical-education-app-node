@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_ENV=production
+    restart: unless-stopped
+    depends_on:
+      - server
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "3010:3010"
+    environment:
+      - NODE_ENV=production
+      # Add your server environment variables here
+      # - DATABASE_URL=your_production_db_url
+      # - API_KEY=your_production_api_key
+    restart: unless-stopped
+    # Add volumes if needed for logs, data, etc.
+    # volumes:
+    #   - ./logs:/app/logs
+    #   - ./data:/app/data
+
+networks:
+  default:
+    name: medical-education-network 
