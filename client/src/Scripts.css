@@ -1,0 +1,12 @@
+.scripts-container {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    justify-content: flex-start;
+    height: 100%;
+
+}
+
+.scripts-container * {
+    margin: 5px;
+}

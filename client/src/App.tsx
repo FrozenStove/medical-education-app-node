@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import './App.css';
 import Sidebar from './Sidebar';
-
-const serverUrl = 'http://localhost:3010'
+import { SERVER_URL } from './constants';
+import './App.css';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -25,7 +24,7 @@ function App() {
         setLoading(true);
 
         try {
-            const response = await fetch(`${serverUrl}/api/chat`, {
+            const response = await fetch(`${SERVER_URL}/api/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
