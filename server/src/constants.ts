@@ -1,4 +1,9 @@
+import dotenv from 'dotenv';
+import path from 'path';
 import config from 'config';
+
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 export const OPENAI_API_KEY: string = process.env.OPENAI_API_KEY || "";
 export const CHROMA_DB_URL: string = config.get('chromaDbUrl') || "";
