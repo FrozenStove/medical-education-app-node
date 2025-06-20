@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
+import Sidebar from './Sidebar';
 
 const serverUrl = 'http://localhost:3010'
 
@@ -12,6 +13,7 @@ function App() {
     const [query, setQuery] = useState('');
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -51,34 +53,41 @@ function App() {
         }
     };
 
+    const toggleSidebar = () => {
+        setSidebarOpen(!sidebarOpen);
+    };
+
     return (
         <div className="App">
-            <header className="App-header">
-                <h1>Medical Education Assistant</h1>
-            </header>
-            <main className="App-main">
-                <div className="conversation-container">
-                    {messages.map((message, index) => (
-                        <div
-                            key={index}
-                            className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}
-                        >
-                            <div className="message-content">{message.content}</div>
-                        </div>
-                    ))}
-                </div>
-                <form onSubmit={handleSubmit} className="query-form">
-                    <textarea
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Ask a medical question..."
-                        className="query-input"
-                    />
-                    <button type="submit" disabled={loading} className="submit-button">
-                        {loading ? 'Processing...' : 'Ask'}
-                    </button>
-                </form>
-            </main>
+            <Sidebar isOpen={sidebarOpen} onToggle={toggleSidebar} />
+            <div className={`app-content ${sidebarOpen ? 'app-with-sidebar' : 'app-without-sidebar'}`}>
+                <header className="App-header">
+                    <h1>Medical Education Assistant</h1>
+                </header>
+                <main className="App-main">
+                    <div className="conversation-container">
+                        {messages.map((message, index) => (
+                            <div
+                                key={index}
+                                className={`message ${message.role === 'user' ? 'user-message' : 'assistant-message'}`}
+                            >
+                                <div className="message-content">{message.content}</div>
+                            </div>
+                        ))}
+                    </div>
+                    <form onSubmit={handleSubmit} className="query-form">
+                        <textarea
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="Ask a medical question..."
+                            className="query-input"
+                        />
+                        <button type="submit" disabled={loading} className="submit-button">
+                            {loading ? 'Processing...' : 'Ask'}
+                        </button>
+                    </form>
+                </main>
+            </div>
         </div>
     );
 }
