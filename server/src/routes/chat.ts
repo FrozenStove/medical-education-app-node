@@ -5,7 +5,7 @@ import { getChromaClient } from '../services/chroma';
 import { OpenAIEmbeddingFunction } from 'chromadb';
 import { OPENAI_API_KEY } from '@/constants';
 
-const router = Router();
+const chatRouter = Router();
 
 if (!OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY is not set in environment variables');
@@ -25,7 +25,7 @@ const chatRequestSchema = z.object({
     context: z.array(z.string()).optional()
 });
 
-router.post('/', async (req, res) => {
+chatRouter.post('/', async (req, res) => {
     try {
         const { message, context } = chatRequestSchema.parse(req.body);
 
@@ -71,4 +71,4 @@ router.post('/', async (req, res) => {
     }
 });
 
-export const chatRouter = router; 
+export default chatRouter; 

@@ -4,7 +4,7 @@ import { getChromaClient } from '../services/chroma';
 import { IncludeEnum, OpenAIEmbeddingFunction } from 'chromadb';
 import { OPENAI_API_KEY } from '@/constants';
 
-const router = Router();
+const articlesRouter = Router();
 
 const articleSchema = z.object({
     title: z.string(),
@@ -12,7 +12,7 @@ const articleSchema = z.object({
     metadata: z.record(z.string()).optional()
 });
 
-router.post('/', async (req, res) => {
+articlesRouter.post('/', async (req, res) => {
     try {
         const article = articleSchema.parse(req.body);
         const chromaClient = getChromaClient();
@@ -41,7 +41,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.get('/', async (req, res) => {
+articlesRouter.get('/', async (req, res) => {
     try {
         const chromaClient = getChromaClient();
         const collection = await chromaClient.getCollection({
@@ -63,4 +63,4 @@ router.get('/', async (req, res) => {
     }
 });
 
-export const articlesRouter = router; 
+export default articlesRouter; 

@@ -82,7 +82,7 @@ async function addToCollectionWithRetry(collection: any, data: any, retryCount =
     }
 }
 
-async function ingestArticles() {
+export async function ingestArticles() {
     try {
         console.log('Initializing ChromaDB client...');
         const chromaClient = new ChromaClient({
@@ -159,8 +159,3 @@ async function ingestArticles() {
     }
 }
 
-console.log('Starting ingestion process...');
-ingestArticles().catch(error => {
-    console.error('Fatal error:', error);
-    process.exit(1);
-}); 

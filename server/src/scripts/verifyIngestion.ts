@@ -7,7 +7,7 @@ import { OPENAI_API_KEY } from '@/constants';
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
-async function verifyIngestion() {
+export async function verifyIngestion() {
     try {
         // Initialize ChromaDB client
         const chromaClient = new ChromaClient({
@@ -68,4 +68,3 @@ async function verifyIngestion() {
     }
 }
 
-verifyIngestion(); 

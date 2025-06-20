@@ -5,7 +5,7 @@ import { CHROMA_DB_URL, OPENAI_API_KEY } from '@/constants';
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
-async function checkChroma() {
+export async function checkChroma() {
     try {
         console.log('Connecting to ChromaDB...');
         const client = new ChromaClient({
@@ -56,5 +56,3 @@ async function checkChroma() {
         console.error('Error checking ChromaDB:', error);
     }
 }
-
-checkChroma();
