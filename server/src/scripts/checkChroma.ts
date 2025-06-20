@@ -1,7 +1,7 @@
 import { ChromaClient, IncludeEnum, OpenAIEmbeddingFunction } from 'chromadb';
 import dotenv from 'dotenv';
 import path from 'path';
-import { CHROMA_DB_URL, OPENAI_API_KEY } from '@/constants';
+import { CHROMA_DB_URL, OPENAI_API_KEY } from '../constants';
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 

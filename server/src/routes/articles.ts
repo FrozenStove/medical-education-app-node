@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { getChromaClient } from '../services/chroma';
 import { IncludeEnum, OpenAIEmbeddingFunction } from 'chromadb';
-import { OPENAI_API_KEY } from '@/constants';
+import { OPENAI_API_KEY } from '../constants';
 
 const articlesRouter = Router();
 

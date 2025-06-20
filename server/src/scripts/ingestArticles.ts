@@ -4,7 +4,7 @@ import { ChromaClient } from 'chromadb';
 import { OpenAIEmbeddingFunction } from 'chromadb';
 import dotenv from 'dotenv';
 import pdfParse from 'pdf-parse';
-import { CHROMA_DB_URL, OPENAI_API_KEY } from '@/constants';
+import { CHROMA_DB_URL, OPENAI_API_KEY } from '../constants';
 
 console.log('Starting ingestion script...');
 

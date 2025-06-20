@@ -1,4 +1,4 @@
-import { CHROMA_DB_URL } from '@/constants';
+import { CHROMA_DB_URL } from '../constants';
 import { ChromaClient } from 'chromadb';
 
 let chromaClient: ChromaClient;

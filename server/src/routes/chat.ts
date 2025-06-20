@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { OpenAI } from 'openai';
 import { getChromaClient } from '../services/chroma';
 import { OpenAIEmbeddingFunction } from 'chromadb';
-import { OPENAI_API_KEY } from '@/constants';
+import { OPENAI_API_KEY } from '../constants';
 
 const chatRouter = Router();
 

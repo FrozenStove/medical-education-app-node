@@ -1,7 +1,7 @@
 import { NextFunction, Router, Request, Response } from 'express';
-import { ingestArticles } from '@/scripts/ingestArticles';
-import { verifyIngestion } from '@/scripts/verifyIngestion';
-import { checkChroma } from '@/scripts/checkChroma';
+import { ingestArticles } from '../scripts/ingestArticles';
+import { verifyIngestion } from '../scripts/verifyIngestion';
+import { checkChroma } from '../scripts/checkChroma';
 
 const scriptsRouter = Router();
 
