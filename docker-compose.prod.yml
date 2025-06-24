@@ -1,0 +1,42 @@
+services:
+  client:
+    image: frozenstove/medical-education-app:client
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_ENV=production
+    restart: unless-stopped
+    depends_on:
+      - server
+
+  server:
+    image: frozenstove/medical-education-app:server
+    ports:
+      - "3010:3010"
+    environment:
+      - NODE_ENV=production
+      # Add your server environment variables here
+      # - DATABASE_URL=your_production_db_url
+      # - API_KEY=your_production_api_key
+    restart: unless-stopped
+    depends_on:
+      - chromadb
+    # Add volumes if needed for logs, data, etc.
+    # volumes:
+    #   - ./logs:/app/logs
+    #   - ./data:/app/data
+
+  chromadb:
+    image: frozenstove/medical-education-app:chromadb
+    ports:
+      - "8010:8000"
+    environment:
+      - CHROMA_SERVER_HOST=0.0.0.0
+      - CHROMA_SERVER_HTTP_PORT=8000
+    volumes:
+      - chromadb_data:/chroma/chroma
+    restart: unless-stopped
+
+volumes:
+  chromadb_data: 
