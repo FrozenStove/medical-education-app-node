@@ -22,14 +22,28 @@ RUN npm run build
 # Production nginx server
 FROM nginx:alpine
 
+# Install envsubst for environment variable substitution
+RUN apk add --no-cache bash
+
 # Copy built files to nginx
 COPY --from=builder /app/build /usr/share/nginx/html
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/nginx.conf
+# Copy custom nginx config template
+COPY nginx.conf /etc/nginx/nginx.conf.template
+
+# Create startup script
+RUN echo '#!/bin/bash\n\
+set -e\n\
+echo "Starting nginx with backend URL: ${BACKEND_URL}"\n\
+envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf\n\
+echo "Nginx configuration generated successfully"\n\
+nginx -t\n\
+echo "Starting nginx..."\n\
+nginx -g "daemon off;"' > /docker-entrypoint.sh && \
+chmod +x /docker-entrypoint.sh
 
 # Expose port 80
 EXPOSE 80
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"] 
+# Start nginx with environment variable substitution
+CMD ["/docker-entrypoint.sh"] 

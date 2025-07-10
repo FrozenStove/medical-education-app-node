@@ -1,60 +1,71 @@
 steps:
   # Build the client container
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/medical-education-client:$COMMIT_SHA', './client']
-    dir: '.'
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "gcr.io/$PROJECT_ID/medical-education-client:$COMMIT_SHA",
+        "./client",
+      ]
+    dir: "."
 
   # Build the server container
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/medical-education-server:$COMMIT_SHA', './server']
-    dir: '.'
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "gcr.io/$PROJECT_ID/medical-education-server:$COMMIT_SHA",
+        "./server",
+      ]
+    dir: "."
 
   # Push the client container to Container Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/medical-education-client:$COMMIT_SHA']
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/medical-education-client:$COMMIT_SHA"]
 
   # Push the server container to Container Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/medical-education-server:$COMMIT_SHA']
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/medical-education-server:$COMMIT_SHA"]
 
-  # Deploy client to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  # Deploy server to Cloud Run first
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: gcloud
     args:
-      - 'run'
-      - 'deploy'
-      - 'medical-education-client'
-      - '--image'
-      - 'gcr.io/$PROJECT_ID/medical-education-client:$COMMIT_SHA'
-      - '--region'
-      - 'us-central1'
-      - '--platform'
-      - 'managed'
-      - '--allow-unauthenticated'
-      - '--port'
-      - '80'
-      - '--set-env-vars'
-      - 'NODE_ENV=production,REACT_APP_ENV=production'
+      - "run"
+      - "deploy"
+      - "medical-education-server"
+      - "--image"
+      - "gcr.io/$PROJECT_ID/medical-education-server:$COMMIT_SHA"
+      - "--region"
+      - "us-west1"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+      - "--port"
+      - "3010"
+      - "--set-env-vars"
+      - "NODE_ENV=production"
 
-  # Deploy server to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
+  # Get the server URL and deploy client with backend URL
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: bash
     args:
-      - 'run'
-      - 'deploy'
-      - 'medical-education-server'
-      - '--image'
-      - 'gcr.io/$PROJECT_ID/medical-education-server:$COMMIT_SHA'
-      - '--region'
-      - 'us-central1'
-      - '--platform'
-      - 'managed'
-      - '--allow-unauthenticated'
-      - '--port'
-      - '3010'
-      - '--set-env-vars'
-      - 'NODE_ENV=production'
+      - "-c"
+      - |
+        echo "Getting server URL..."
+        SERVER_URL=$(gcloud run services describe medical-education-server --region=us-west1 --format='value(status.url)')
+        echo "Server URL: $SERVER_URL"
+        echo "Deploying client with backend URL: $SERVER_URL"
+        gcloud run deploy medical-education-client \
+          --image gcr.io/$PROJECT_ID/medical-education-client:$COMMIT_SHA \
+          --region us-west1 \
+          --platform managed \
+          --allow-unauthenticated \
+          --port 80 \
+          --set-env-vars NODE_ENV=production,REACT_APP_ENV=production,BACKEND_URL=$SERVER_URL
 
 images:
-  - 'gcr.io/$PROJECT_ID/medical-education-client:$COMMIT_SHA'
-  - 'gcr.io/$PROJECT_ID/medical-education-server:$COMMIT_SHA' 
+  - "gcr.io/$PROJECT_ID/medical-education-client:$COMMIT_SHA"
+  - "gcr.io/$PROJECT_ID/medical-education-server:$COMMIT_SHA"

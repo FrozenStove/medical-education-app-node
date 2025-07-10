@@ -1,67 +1,28 @@
 #!/bin/bash
 
-# Local testing script - equivalent to docker-compose up
-set -e
+# Local development script for medical education app
+echo "Starting Medical Education App locally..."
 
-echo "🚀 Starting Medical Education App locally..."
+# Check if Docker is running
+if ! docker info > /dev/null 2>&1; then
+    echo "Error: Docker is not running. Please start Docker and try again."
+    exit 1
+fi
 
-# Create a custom network
-echo "📡 Creating network..."
-docker network create medical-education-network 2>/dev/null || echo "Network already exists"
+# Build and start the services
+echo "Building and starting services with docker-compose..."
 
-# Build images if they don't exist
-echo "🔨 Building images..."
-docker build -t medical-education-client ./client
-docker build -t medical-education-server ./server
+# Set environment variables for local development
+export BACKEND_URL=http://localhost:3010
+export NODE_ENV=development
+export REACT_APP_ENV=development
 
-# Stop and remove existing containers
-echo "🧹 Cleaning up existing containers..."
-docker stop medical-education-chromadb medical-education-server medical-education-client 2>/dev/null || true
-docker rm medical-education-chromadb medical-education-server medical-education-client 2>/dev/null || true
+# Start the services
+docker-compose up --build
 
-# Start ChromaDB first
-echo "🗄️ Starting ChromaDB..."
-docker run -d \
-  --name medical-education-chromadb \
-  --network medical-education-network \
-  -p 8010:8000 \
-  -e CHROMA_SERVER_HOST=0.0.0.0 \
-  -e CHROMA_SERVER_HTTP_PORT=8000 \
-  -v chromadb_data:/chroma/chroma \
-  chromadb/chroma:latest
-
-# Start Server
-echo "🔌 Starting Server..."
-docker run -d \
-  --name medical-education-server \
-  --network medical-education-network \
-  -p 3010:3010 \
-  -e NODE_ENV=production \
-  medical-education-server
-
-# Start Client
-echo "🌐 Starting Client..."
-docker run -d \
-  --name medical-education-client \
-  --network medical-education-network \
-  -p 80:80 \
-  -e NODE_ENV=production \
-  -e REACT_APP_ENV=production \
-  medical-education-client
-
-echo "✅ All containers started!"
+echo "Services are starting up..."
+echo "Frontend will be available at: http://localhost:3000"
+echo "Backend will be available at: http://localhost:3010"
+echo "Health check: http://localhost:3010/health"
 echo ""
-echo "🌐 Access your application:"
-echo "   Frontend: http://localhost"
-echo "   API:      http://localhost:3010"
-echo "   ChromaDB: http://localhost:8010"
-echo ""
-echo "📊 Container status:"
-docker ps --filter "name=medical-education"
-echo ""
-echo "📝 To view logs:"
-echo "   docker logs -f medical-education-client"
-echo "   docker logs -f medical-education-server"
-echo "   docker logs -f medical-education-chromadb"
-echo ""
-echo "🛑 To stop: ./stop-local.sh" 
+echo "Press Ctrl+C to stop the services" 

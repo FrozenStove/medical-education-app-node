@@ -8,6 +8,7 @@ services:
     environment:
       - NODE_ENV=production
       - REACT_APP_ENV=production
+      - BACKEND_URL=http://server:3010
     restart: unless-stopped
     depends_on:
       - server
@@ -43,4 +44,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  chromadb_data: 
+  chromadb_data:
